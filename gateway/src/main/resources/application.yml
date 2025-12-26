@@ -1,0 +1,63 @@
+server:
+  port: 8080
+  forward-headers-strategy: framework
+
+spring:
+  main:
+    web-application-type: reactive
+
+  config:
+    import: "optional:nacos:"
+
+  cloud:
+    nacos:
+      config:
+        enabled: false
+        import-check:
+          enabled: false
+      discovery:
+        enabled: false
+
+  # Redis 配置
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD:}
+      database: 0
+      lettuce:
+        pool:
+          max-active: 8
+          max-idle: 8
+          min-idle: 0
+          max-wait: -1ms
+        shutdown-timeout: 100ms
+
+  # 监控配置
+  management:
+    endpoints:
+      web:
+        exposure:
+          include: health,info,metrics,prometheus,gateway
+    metrics:
+      tags:
+        application: ${spring.application.name}
+    tracing:
+      sampling:
+        probability: 1.0
+
+logging:
+  level:
+    root: INFO
+    com.example.gateway: DEBUG
+    org.springframework.cloud.gateway: DEBUG
+    org.springframework.security: INFO
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+    file: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+
+jwt:
+  public-key-location: classpath:keys/public.pem
+  private-key-location: classpath:keys/private_pkcs8.pem
+  issuer: taskflow
+  audience: taskflow-users
