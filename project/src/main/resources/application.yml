@@ -2,14 +2,6 @@ spring:
   config:
     import: "optional:nacos:"
 
-  cloud:
-    nacos:
-      config:
-        enabled: false
-        import-check:
-          enabled: false
-      discovery:
-        enabled: false
 
   datasource:
     url: jdbc:mysql://${MYSQL_HOST:localhost}:${MYSQL_PORT:3306}/taskflow_project?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Shanghai

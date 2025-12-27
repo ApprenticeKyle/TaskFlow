@@ -1,3 +1,6 @@
+[English](#english) | [中文](#chinese)
+
+<a name="chinese"></a>
 # TaskFlow API 测试示例
 
 ## 一、认证接口
@@ -247,3 +250,256 @@ curl http://localhost:8080/actuator/gateway/routes
 **解决**：
 - 检查下游服务状态
 - 等待熔断器恢复
+ 
+---
+
+<a name="english"></a>
+# TaskFlow API Testing Guide
+
+## 1. Authentication APIs
+
+### 1.1 User Login
+```bash
+curl -X POST http://localhost:8080/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{
+    "username": "admin",
+    "password": "123456"
+  }'
+```
+
+**Response**:
+```json
+{
+  "code": 200,
+  "message": "Login successful",
+  "data": {
+    "token": "mock-jwt-token-123456",
+    "userId": "1",
+    "username": "admin"
+  }
+}
+```
+
+### 1.2 User Registration
+```bash
+curl -X POST http://localhost:8080/auth/register \
+  -H "Content-Type: application/json" \
+  -d '{
+    "username": "newuser",
+    "password": "123456",
+    "email": "user@example.com"
+  }'
+```
+
+## 2. Project APIs
+
+### 2.1 Get Project List
+```bash
+# Access via Gateway
+curl http://localhost:8080/api/projects
+
+# Direct access (for debugging)
+curl http://localhost:8082/projects
+```
+
+**Response**:
+```json
+{
+  "code": 200,
+  "message": "Projects retrieved successfully",
+  "data": ["Project1", "Project2", "Project3"]
+}
+```
+
+### 2.2 Get Project Details
+```bash
+curl http://localhost:8080/api/projects/1
+```
+
+**Response**:
+```json
+{
+  "code": 200,
+  "message": "Project details retrieved successfully",
+  "data": {
+    "id": 1,
+    "name": "Project1",
+    "description": "Description for Project 1"
+  }
+}
+```
+
+### 2.3 Create Project
+```bash
+curl -X POST http://localhost:8080/api/projects \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "New Project",
+    "description": "Project Description"
+  }'
+```
+
+### 2.4 Get Tasks for Project (Service Call Example)
+```bash
+curl http://localhost:8080/api/projects/1/tasks
+```
+
+**Note**: This API will call `task-service` via WebClient.
+
+## 3. Task APIs
+
+### 3.1 Get Task List
+```bash
+curl http://localhost:8080/api/tasks?projectId=1
+```
+
+### 3.2 Create Task
+```bash
+curl -X POST http://localhost:8080/api/tasks \
+  -H "Content-Type: application/json" \
+  -d '{
+    "projectId": 1,
+    "title": "New Task",
+    "description": "Task Description"
+  }'
+```
+
+## 4. Notification APIs
+
+### 4.1 Get Notification List
+```bash
+curl http://localhost:8080/api/notifications
+```
+
+## 5. Analytics APIs
+
+### 5.1 Get Analytics Data
+```bash
+curl http://localhost:8080/api/analytics
+```
+
+## 6. Search APIs
+
+### 6.1 Search Content
+```bash
+curl http://localhost:8080/api/search?q=keyword
+```
+
+## 7. File APIs
+
+### 7.1 Upload File
+```bash
+curl -X POST http://localhost:8080/api/files/upload \
+  -F "file=@/path/to/file.txt"
+```
+
+### 7.2 Download File
+```bash
+curl http://localhost:8080/api/files/download/1 \
+  -o downloaded_file.txt
+```
+
+## 8. Postman Testing
+
+### 8.1 Import Environment Variables
+
+Create environment variables in Postman:
+
+| Variable | Value | Description |
+|--------|-----|------|
+| gateway_url | http://localhost:8080 | Gateway URL |
+| auth_url | http://localhost:8081 | Auth Service URL |
+| project_url | http://localhost:8082 | Project Service URL |
+| task_url | http://localhost:8083 | Task Service URL |
+
+### 8.2 Test Flow
+
+1. **Login to get token**
+   - Method: POST
+   - URL: `{{gateway_url}}/auth/login`
+   - Body: JSON
+   ```json
+   {
+     "username": "admin",
+     "password": "123456"
+   }
+   ```
+
+2. **Access protected APIs using token**
+   - Add Header: `Authorization: Bearer {{token}}`
+   - URL: `{{gateway_url}}/api/projects`
+
+## 9. Debugging Tips
+
+### 9.1 View Service Logs
+
+Check console logs for each service in IDEA.
+
+### 9.2 Use Actuator Monitoring
+
+```bash
+# Check Health Status
+curl http://localhost:8080/actuator/health
+
+# Check Service Info
+curl http://localhost:8080/actuator/info
+
+# Check Metrics
+curl http://localhost:8080/actuator/metrics
+```
+
+### 9.3 Test Inter-service Calls
+
+Set breakpoints in `ProjectControllerWithServiceCall` to see how WebClient calls `task-service`.
+
+### 9.4 Gateway Route Testing
+
+```bash
+# detailed route information
+curl http://localhost:8080/actuator/gateway/routes
+```
+
+## 10. Common Error Handling
+
+### 10.1 Service Unavailable
+
+**Error**:
+```json
+{
+  "code": 503,
+  "message": "Service Unavailable"
+}
+```
+
+**Solution**:
+- Check if service is started
+- Check Nacos registration status (if enabled)
+
+### 10.2 Rate Limited
+
+**Error**:
+```json
+{
+  "code": 429,
+  "message": "Too Many Requests"
+}
+```
+
+**Solution**:
+- Reduce request frequency
+- Check rate limit configuration
+
+### 10.3 Circuit Broken
+
+**Error**:
+```json
+{
+  "code": 503,
+  "message": "Circuit Breaker Open"
+}
+```
+
+**Solution**:
+- Check downstream service status
+- Wait for circuit breaker to recover

@@ -1,3 +1,6 @@
+[English](#english) | [中文](#chinese)
+
+<a name="chinese"></a>
 # TaskFlow 微服务架构说明
 
 ## 一、整体架构
@@ -287,3 +290,296 @@ curl http://localhost:8082/projects
 - 认证鉴权（统一处理 JWT）
 - 限流熔断（保护服务）
 - 负载均衡（分发请求）
+
+---
+
+<a name="english"></a>
+# TaskFlow Microservices Architecture
+
+## 1. Overall Architecture
+
+### 1. Gateway Layer (Gateway)
+- **Port**: 8080
+- **Responsibilities**: Unified Entry Point, Request Routing, Authentication, Rate Limiting, Circuit Breaking
+- **Access**: All external requests must go through the gateway
+
+### 2. Service Layer
+- **auth-service**: 8081 - Authentication Service
+- **project-service**: 8082 - Project Service
+- **task-service**: 8083 - Task Service
+- **notification-service**: 8084 - Notification Service
+- **analytics-service**: 8085 - Analytics Service
+- **search-service**: 8086 - Search Service
+- **file-service**: 8087 - File Service
+
+## 2. Request Routing Rules
+
+### Access via Gateway (Recommended for Production)
+
+All requests are forwarded through the gateway:
+
+```
+External Request -> Gateway (8080) -> Concrete Service
+```
+
+**Routing Rules**:
+- `/auth/**` -> auth-service
+- `/api/projects/**` -> project-service
+- `/api/tasks/**` -> task-service
+- `/api/notifications/**` -> notification-service
+- `/api/analytics/**` -> analytics-service
+- `/api/search/**` -> search-service
+- `/api/files/**` -> file-service
+
+**Examples**:
+```bash
+# Login
+POST http://localhost:8080/auth/login
+
+# Get Project List
+GET http://localhost:8080/api/projects
+
+# Get Project Details
+GET http://localhost:8080/api/projects/1
+
+# Get Task List
+GET http://localhost:8080/api/tasks?projectId=1
+```
+
+### Direct Service Access (For Development/Debugging)
+
+In a development environment, you can access services directly for debugging:
+
+```bash
+# Direct access to project-service
+GET http://localhost:8082/projects
+
+# Direct access to auth-service
+POST http://localhost:8081/login
+```
+
+## 3. Inter-service Communication
+
+### 1. HTTP REST API (Recommended)
+
+Use **WebClient** for HTTP calls, which is the recommended way in Spring WebFlux.
+
+**Pros**:
+- Simple and direct, easy to debug
+- Supports reactive programming
+- Can be tested via browser or Postman
+
+**Example**:
+```java
+@Service
+public class TaskServiceClient {
+    
+    @Autowired
+    private WebClient.Builder webClientBuilder;
+
+    public Mono<Map> getTasksByProjectId(Long projectId) {
+        return webClientBuilder
+            .build()
+            .get()
+            .uri("lb://task-service/tasks?projectId=" + projectId)
+            .retrieve()
+            .bodyToMono(Map.class);
+    }
+}
+```
+
+**WebClient Configuration**:
+```java
+@Configuration
+public class WebClientConfig {
+    
+    @Bean
+    public WebClient.Builder webClientBuilder() {
+        return WebClient.builder();
+    }
+}
+```
+
+### 2. OpenFeign (Declarative)
+
+Use **OpenFeign** for declarative calls.
+
+**Pros**:
+- Cleaner code
+- Supports load balancing
+- High integration
+
+**Example**:
+```java
+@FeignClient(name = "task-service")
+public interface TaskFeignClient {
+    
+    @GetMapping("/tasks")
+    List<Task> getTasks(@RequestParam("projectId") Long projectId);
+}
+```
+
+**Dependencies**:
+```xml
+<dependency>
+    <groupId>org.springframework.cloud</groupId>
+    <artifactId>spring-cloud-starter-openfeign</artifactId>
+</dependency>
+```
+
+## 4. Interface Exposure
+
+### 1. REST API Interfaces (Required)
+
+**All services must expose REST API interfaces** for:
+- Frontend calls (via gateway)
+- Inter-service calls (via HTTP)
+- Testing and debugging
+
+**Example**:
+```java
+@RestController
+@RequestMapping("/projects")
+public class ProjectController {
+    
+    @GetMapping
+    public Mono<List<Project>> list() {
+        return Mono.just(projectService.findAll());
+    }
+    
+    @GetMapping("/{id}")
+    public Mono<Project> getById(@PathVariable Long id) {
+        return Mono.just(projectService.findById(id));
+    }
+}
+```
+
+### 2. Internal Service Methods (Optional)
+
+If using OpenFeign, you can define interfaces for other services to call, but it is not mandatory.
+
+## 5. Development & Debugging
+
+### Method 1: Direct Single Service Debugging
+
+1. Start only the service you need to debug (e.g., project-service)
+2. Access the service port directly:
+   ```bash
+   GET http://localhost:8082/projects
+   ```
+
+### Method 2: Debugging via Gateway
+
+1. Start the gateway and the service you need to debug
+2. Access via the gateway:
+   ```bash
+   GET http://localhost:8080/api/projects
+   ```
+
+### Method 3: Using Postman
+
+1. Import API documentation
+2. Select environment (Dev/Test/Prod)
+3. Send requests to test
+
+## 6. Service Registration & Discovery
+
+### Enable Nacos (Production)
+
+Enable in `application.yml`:
+
+```yaml
+spring:
+  cloud:
+    nacos:
+      discovery:
+        enabled: true
+      config:
+        enabled: true
+```
+
+### Disable Nacos (Development)
+
+Current configuration disables Nacos. Inter-service calls use `lb://` protocol:
+
+```java
+.uri("lb://task-service")
+```
+
+This uses the service name for load-balanced calls.
+
+## 7. Best Practices
+
+### 1. Service Design Principles
+- Each service is responsible for a single business domain
+- Communicate via REST APIs
+- Avoid direct database access between services
+
+### 2. Interface Design Principles
+- Use RESTful style
+- Unified return format
+- Add version control
+
+### 3. Error Handling
+- Use global exception handlers
+- Unified error codes
+- Log errors
+
+### 4. Monitoring & Logging
+- Use Actuator for monitoring
+- Integrate Prometheus + Grafana
+- Use ELK for log collection
+
+## 8. Quick Start
+
+### 1. Start All Services
+```bash
+# Start sequentially in IDEA
+GatewayApplication (8080)
+AuthApplication (8081)
+ProjectApplication (8082)
+TaskApplication (8083)
+...
+```
+
+### 2. Test Interfaces
+```bash
+# Test Authentication
+curl -X POST http://localhost:8080/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"username":"admin","password":"123456"}'
+
+# Test Project Service
+curl http://localhost:8080/api/projects
+
+# Direct Project Service Access (Debug)
+curl http://localhost:8082/projects
+```
+
+### 3. View Logs
+Each service outputs logs to the console for real-time viewing.
+
+## 9. FAQ
+
+### Q1: Can I access specific services directly?
+**A**: Yes! You can access specific service ports directly for debugging, but we recommend using the gateway in production.
+
+### Q2: What method is used for inter-service calls?
+**A**: We recommend WebClient (HTTP REST) for simplicity. You can also use OpenFeign (declarative).
+
+### Q3: Is it necessary to expose RPC interfaces?
+**A**: No. Spring Cloud microservices use HTTP REST APIs for communication, so RPC is not needed.
+
+### Q4: How to debug a single service?
+**A**: 
+1. Start only that service
+2. Directly access its port
+3. Or start gateway + that service, and access via gateway
+
+### Q5: What is the role of the gateway?
+**A**: 
+- Unified Entry Point (all requests go through one port)
+- Routing (forward to different services based on path)
+- Authentication (unified JWT handling)
+- Rate Limiting & Circuit Breaking (service protection)
+- Load Balancing (request distribution)

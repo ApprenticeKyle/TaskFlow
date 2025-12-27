@@ -21,12 +21,12 @@ public class ProjectControllerWithServiceCall {
     @GetMapping("/{id}/tasks")
     public Mono<Map<String, Object>> getProjectTasks(@PathVariable Long id) {
         return taskServiceClient.getTasksByProjectId(id)
-            .map(tasks -> {
-                Map<String, Object> result = new HashMap<>();
-                result.put("code", 200);
-                result.put("message", "获取项目任务成功");
-                result.put("data", tasks);
-                return result;
-            });
+                .map(tasks -> {
+                    Map<String, Object> result = new HashMap<>();
+                    result.put("code", 200);
+                    result.put("message", "获取项目任务成功");
+                    result.put("data", tasks);
+                    return result;
+                });
     }
 }

@@ -1,3 +1,6 @@
+[English](#english) | [中文](#chinese)
+
+<a name="chinese"></a>
 # TaskFlow 微服务项目
 
 ## 项目简介
@@ -274,3 +277,283 @@ A: 不需要。Spring Cloud 微服务使用 HTTP REST API 通信。
 - 项目主页: [GitHub Repository]
 - 问题反馈: [Issues]
 - 邮箱: support@taskflow.com
+
+---
+
+<a name="english"></a>
+# TaskFlow Microservices Project
+
+## Introduction
+
+TaskFlow is a microservices-based project built with Spring Cloud. It adopts a separation of frontend and backend design, providing complete functionalities such as task management, project management, notifications, and analytics.
+
+## Tech Stack
+
+### Core Frameworks
+- **Spring Boot**: 3.2.0
+- **Spring Cloud**: 2023.0.0
+- **Spring Cloud Alibaba**: 2022.0.0.0
+- **Java**: 21
+
+### Infrastructure
+- **Nacos**: Service Registration & Configuration Center
+- **Redis**: Caching & Session Management
+- **MySQL**: Relational Database
+- **Elasticsearch**: Search Engine
+- **Prometheus**: Metrics Monitoring
+- **Zipkin**: Distributed Tracing
+
+### Gateway & Security
+- **Spring Cloud Gateway**: API Gateway
+- **Spring Security + OAuth2**: Authentication & Authorization
+- **Resilience4j**: Circuit Breaker
+- **Redis**: Rate Limiting
+
+## Services List
+
+| Service Name | Port | Responsibility | Database | Redis DB |
+|---------|------|------|--------|----------|
+| api-gateway | 8080 | API Gateway | 0 |
+| auth-service | 8081 | Authentication Service | taskflow_auth | 1 |
+| project-service | 8082 | Project Service | taskflow_project | 2 |
+| task-service | 8083 | Task Service | taskflow_task | 3 |
+| notification-service | 8084 | Notification Service | taskflow_notification | 4 |
+| analytics-service | 8085 | Analytics Service | taskflow_analytics | 5 |
+| search-service | 8086 | Search Service | - | 6 |
+| file-service | 8087 | File Service | taskflow_file | 7 |
+
+## Project Structure
+
+```
+TaskFlow/
+├── gateway/              # API Gateway
+├── auth/                 # Authentication Service
+├── project/               # Project Service
+├── task/                 # Task Service
+├── notification/          # Notification Service
+├── analytics/             # Analytics Service
+├── search/               # Search Service
+├── file/                 # File Service
+├── pom.xml              # Parent POM
+├── ARCHITECTURE.md      # Architecture Documentation
+└── API_TEST.md          # API Test Documentation
+```
+
+## Quick Start
+
+### Prerequisites
+
+1. JDK 21+
+2. Maven 3.6+
+3. MySQL 8.0+
+4. Redis 5.0+
+5. Nacos 2.0+ (Optional)
+
+### Startup Steps
+
+#### 1. Clone Project
+```bash
+git clone <repository-url>
+cd TaskFlow
+```
+
+#### 2. Configure Database
+
+Create databases:
+```sql
+CREATE DATABASE taskflow_auth CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+CREATE DATABASE taskflow_project CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+CREATE DATABASE taskflow_task CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+CREATE DATABASE taskflow_notification CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+CREATE DATABASE taskflow_analytics CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+CREATE DATABASE taskflow_file CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+```
+
+#### 3. Configure Environment Variables (Optional)
+
+```bash
+export MYSQL_HOST=localhost
+export MYSQL_PORT=3306
+export MYSQL_USERNAME=root
+export MYSQL_PASSWORD=your_password
+
+export REDIS_HOST=localhost
+export REDIS_PORT=6379
+export REDIS_PASSWORD=your_password
+
+export NACOS_HOST=localhost
+export NACOS_PORT=8848
+```
+
+#### 4. Start Services
+
+Start each service's Application class in IDEA:
+
+1. GatewayApplication (8080)
+2. AuthApplication (8081)
+3. ProjectApplication (8082)
+4. TaskApplication (8083)
+5. NotificationApplication (8084)
+6. AnalyticsApplication (8085)
+7. SearchApplication (8086)
+8. FileApplication (8087)
+
+Or use Maven commands:
+```bash
+mvn clean install
+cd gateway && mvn spring-boot:run
+cd ../auth && mvn spring-boot:run
+# ... other services
+```
+
+## Development Guide
+
+### Debugging Single Service
+
+**Method 1: Direct Service Access**
+```bash
+# Start only project-service
+GET http://localhost:8082/projects
+```
+
+**Method 2: Access via Gateway**
+```bash
+# Start gateway + project-service
+GET http://localhost:8080/api/projects
+```
+
+### Inter-service Calls
+
+Use **WebClient** for HTTP calls:
+
+```java
+@Service
+public class TaskServiceClient {
+    
+    @Autowired
+    private WebClient.Builder webClientBuilder;
+
+    public Mono<Map> getTasksByProjectId(Long projectId) {
+        return webClientBuilder
+            .build()
+            .get()
+            .uri("lb://task-service/tasks?projectId=" + projectId)
+            .retrieve()
+            .bodyToMono(Map.class);
+    }
+}
+```
+
+For more details, please refer to [ARCHITECTURE.md](ARCHITECTURE.md).
+
+### API Testing
+
+Use Postman or curl to test APIs:
+
+```bash
+# Login
+curl -X POST http://localhost:8080/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"username":"admin","password":"123456"}'
+
+# Get Project List
+curl http://localhost:8080/api/projects
+```
+
+For detailed API documentation, please refer to [API_TEST.md](API_TEST.md).
+
+## Deployment Guide
+
+### Docker Deployment
+
+#### 1. Build Images
+```bash
+mvn clean package -DskipTests
+docker build -t taskflow/gateway:latest ./gateway
+docker build -t taskflow/auth:latest ./auth
+# ... other services
+```
+
+#### 2. Run Containers
+```bash
+docker-compose up -d
+```
+
+### Kubernetes Deployment
+
+Deploy using Helm Chart:
+
+```bash
+helm install taskflow ./helm/taskflow
+```
+
+## Monitoring & Operations
+
+### Health Check
+
+```bash
+# Gateway Health Check
+curl http://localhost:8080/actuator/health
+
+# Service Health Checks
+curl http://localhost:8081/actuator/health
+curl http://localhost:8082/actuator/health
+# ...
+```
+
+### View Logs
+
+View in IDEA console or use log collection tools.
+
+### Performance Monitoring
+
+Access Prometheus + Grafana:
+- Prometheus: http://localhost:9090
+- Grafana: http://localhost:3000
+
+## FAQ
+
+### Q: How to disable Nacos?
+
+A: Set in `application.yml`:
+```yaml
+spring:
+  cloud:
+    nacos:
+      config:
+        enabled: false
+        import-check:
+          enabled: false
+      discovery:
+        enabled: false
+```
+
+### Q: What method is used for inter-service calls?
+
+A: Recommended is WebClient (HTTP REST), or OpenFeign (Declarative).
+
+### Q: Can I access specific services directly?
+
+A: Yes! You can access service ports directly for debugging, but use the gateway for production.
+
+### Q: Is it necessary to expose RPC interfaces?
+
+A: No. Spring Cloud microservices use HTTP REST APIs for communication.
+
+## Contribution Guide
+
+1. Fork this repository
+2. Create Feature Branch (`git checkout -b feature/AmazingFeature`)
+3. Commit Changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to Branch (`git push origin feature/AmazingFeature`)
+5. Open Pull Request
+
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## Contact
+
+- Project Home: [GitHub Repository]
+- Issues: [Issues]
+- Email: support@taskflow.com
