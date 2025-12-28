@@ -1,4 +1,4 @@
-package org.r2learning.gateway.config;
+package org.r2learning.gateway.infrastructure.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

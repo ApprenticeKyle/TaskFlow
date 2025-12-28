@@ -1,4 +1,4 @@
-package org.r2learning.gateway.config;
+package org.r2learning.gateway.infrastructure.config;
 
 import com.nimbusds.jose.jwk.JWK;
 import com.nimbusds.jose.jwk.JWKSet;

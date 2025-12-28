@@ -1,4 +1,4 @@
-package org.r2learning.gateway.filter;
+package org.r2learning.gateway.infrastructure.filter;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
