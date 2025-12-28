@@ -7,6 +7,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import org.r2learning.project.interfaces.web.dto.ProjectDTO;
+import org.r2learning.project.interfaces.web.dto.ProjectStatsDTO;
 
 @RestController
 @RequestMapping("/api/projects")
@@ -24,5 +25,11 @@ public class ProjectController {
     @GetMapping("/{id}/details")
     public ResponseEntity<ProjectDTO> getProjectDetails(@PathVariable Long id) {
         return ResponseEntity.ok(projectApplicationService.getProjectWithTasks(id));
+    }
+
+    @GetMapping("/{id}/stats")
+    public ResponseEntity<ProjectStatsDTO> getProjectStats(
+            @PathVariable Long id) {
+        return ResponseEntity.ok(projectApplicationService.getProjectStats(id));
     }
 }
