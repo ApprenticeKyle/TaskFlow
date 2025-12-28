@@ -5,17 +5,16 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
-
-import java.util.Map;
+import org.r2learning.project.interfaces.web.dto.TaskRemoteDTO;
 
 import java.util.List;
 
 @FeignClient(name = "task-service")
 public interface TaskFeignClient {
 
-    @GetMapping("/tasks")
-    List<Map<String, Object>> getTasksByProjectId(@RequestParam("projectId") Long projectId);
+    @GetMapping("/api/tasks")
+    List<TaskRemoteDTO> getTasksByProjectId(@RequestParam("projectId") Long projectId);
 
-    @PostMapping("/tasks")
-    Map<String, Object> createTask(@RequestBody Map<String, Object> taskData);
+    @PostMapping("/api/tasks")
+    Long createTask(@RequestBody Object taskData);
 }
