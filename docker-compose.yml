@@ -1,0 +1,183 @@
+version: '3.8'
+
+services:
+  nacos:
+    image: nacos/nacos-server:v2.2.0
+    container_name: nacos
+    environment:
+      - MODE=stand-alone
+      - JVM_XMS=256m
+      - JVM_XMX=256m
+    ports:
+      - "8848:8848"
+      - "9848:9848"
+    networks:
+      - taskflow_net
+
+  mysql:
+    image: mysql:8.0
+    container_name: mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+    volumes:
+      - ./docker/mysql/init.sql:/docker-entrypoint-initdb.d/init.sql
+      - mysql_data:/var/lib/mysql
+    ports:
+      - "3306:3306"
+    command: --default-authentication-plugin=mysql_native_password
+    networks:
+      - taskflow_net
+
+  redis:
+    image: redis:7.0-alpine
+    container_name: redis
+    ports:
+      - "6379:6379"
+    networks:
+      - taskflow_net
+
+  gateway:
+    build: ./gateway
+    container_name: gateway
+    ports:
+      - "8080:8080"
+    environment:
+      - NACOS_HOST=nacos
+      - NACOS_PORT=8848
+    depends_on:
+      - nacos
+    networks:
+      - taskflow_net
+
+  auth:
+    build: ./auth
+    container_name: auth
+    environment:
+      - NACOS_HOST=nacos
+      - NACOS_PORT=8848
+      - MYSQL_HOST=mysql
+      - MYSQL_PORT=3306
+      - MYSQL_PASSWORD=root
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+    depends_on:
+      - nacos
+      - mysql
+      - redis
+    networks:
+      - taskflow_net
+
+  project:
+    build: ./project
+    container_name: project
+    environment:
+      - NACOS_HOST=nacos
+      - NACOS_PORT=8848
+      - MYSQL_HOST=mysql
+      - MYSQL_PORT=3306
+      - MYSQL_PASSWORD=root
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+    depends_on:
+      - nacos
+      - mysql
+      - redis
+    networks:
+      - taskflow_net
+
+  task:
+    build: ./task
+    container_name: task
+    environment:
+      - NACOS_HOST=nacos
+      - NACOS_PORT=8848
+      - MYSQL_HOST=mysql
+      - MYSQL_PORT=3306
+      - MYSQL_PASSWORD=root
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+    depends_on:
+      - nacos
+      - mysql
+      - redis
+    networks:
+      - taskflow_net
+
+  file:
+    build: ./file
+    container_name: file
+    environment:
+      - NACOS_HOST=nacos
+      - NACOS_PORT=8848
+      - MYSQL_HOST=mysql
+      - MYSQL_PORT=3306
+      - MYSQL_PASSWORD=root
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+    depends_on:
+      - nacos
+      - mysql
+      - redis
+    networks:
+      - taskflow_net
+
+  search:
+    build: ./search
+    container_name: search
+    environment:
+      - NACOS_HOST=nacos
+      - NACOS_PORT=8848
+      - MYSQL_HOST=mysql
+      - MYSQL_PORT=3306
+      - MYSQL_PASSWORD=root
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+    depends_on:
+      - nacos
+      - mysql
+      - redis
+    networks:
+      - taskflow_net
+
+  analytics:
+    build: ./analytics
+    container_name: analytics
+    environment:
+      - NACOS_HOST=nacos
+      - NACOS_PORT=8848
+      - MYSQL_HOST=mysql
+      - MYSQL_PORT=3306
+      - MYSQL_PASSWORD=root
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+    depends_on:
+      - nacos
+      - mysql
+      - redis
+    networks:
+      - taskflow_net
+
+  notification:
+    build: ./notification
+    container_name: notification
+    environment:
+      - NACOS_HOST=nacos
+      - NACOS_PORT=8848
+      - MYSQL_HOST=mysql
+      - MYSQL_PORT=3306
+      - MYSQL_PASSWORD=root
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+    depends_on:
+      - nacos
+      - mysql
+      - redis
+    networks:
+      - taskflow_net
+
+networks:
+  taskflow_net:
+    driver: bridge
+
+volumes:
+  mysql_data:
