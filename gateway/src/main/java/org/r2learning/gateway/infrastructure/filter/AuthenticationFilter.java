@@ -36,7 +36,7 @@ public class AuthenticationFilter implements GlobalFilter, Ordered {
     public AuthenticationFilter(JwtDecoder jwtDecoder, ObjectMapper objectMapper) {
         this.jwtDecoder = jwtDecoder;
         this.objectMapper = objectMapper;
-        this.skipPaths = List.of(
+        this.skipPaths = List.of("/api/auth/", 
             "/auth/",
             "/actuator/health",
             "/actuator/info",
@@ -55,24 +55,20 @@ public class AuthenticationFilter implements GlobalFilter, Ordered {
         ServerHttpRequest request = exchange.getRequest();
         String path = request.getPath().value();
 
-        // 跳过不需要认证的路径
         if (shouldSkipAuth(path)) {
             log.debug("Skipping auth for path: {}", path);
             return chain.filter(exchange);
         }
 
-        // 获取token
         String token = extractToken(request);
         if (!StringUtils.hasText(token)) {
             log.warn("No token found in request to: {}", path);
             return unauthorized(exchange, "Missing authentication token");
         }
 
-        // 验证token
         return validateToken(token)
             .flatMap(jwt -> {
                 log.debug("Token validated for user: {}", jwt.getSubject());
-                // 添加用户信息到请求头
                 ServerHttpRequest modifiedRequest = addUserHeaders(request, jwt);
                 return chain.filter(exchange.mutate().request(modifiedRequest).build());
             })
@@ -91,13 +87,11 @@ public class AuthenticationFilter implements GlobalFilter, Ordered {
     }
 
     private String extractToken(ServerHttpRequest request) {
-        // 1. 从Authorization头获取
         String authHeader = request.getHeaders().getFirst(HttpHeaders.AUTHORIZATION);
         if (StringUtils.hasText(authHeader) && authHeader.startsWith("Bearer ")) {
             return authHeader.substring(7);
         }
 
-        // 2. 从查询参数获取（可选，生产环境不建议）
         String tokenParam = request.getQueryParams().getFirst("access_token");
         if (StringUtils.hasText(tokenParam)) {
             return tokenParam;
@@ -131,13 +125,20 @@ public class AuthenticationFilter implements GlobalFilter, Ordered {
             roles = Collections.emptyList();
         }
 
-        // 添加自定义头
+        String issuer = jwt.getClaimAsString("iss");
+        if (issuer == null) {
+            issuer = "";
+        }
+
+        List<String> audience = jwt.getAudience();
+        String audienceStr = audience != null && !audience.isEmpty() ? String.join(",", audience) : "";
+
         return request.mutate()
             .header("X-User-Id", userId)
             .header("X-User-Name", username)
             .header("X-User-Roles", String.join(",", roles))
-            .header("X-Token-Issuer", jwt.getIssuer() != null ? jwt.getIssuer().toString() : "")
-            .header("X-Token-Audience", String.join(",", jwt.getAudience()))
+            .header("X-Token-Issuer", issuer)
+            .header("X-Token-Audience", audienceStr)
             .build();
     }
 
@@ -165,6 +166,6 @@ public class AuthenticationFilter implements GlobalFilter, Ordered {
 
     @Override
     public int getOrder() {
-        return -100; // 设置较高的优先级
+        return -100;
     }
 }

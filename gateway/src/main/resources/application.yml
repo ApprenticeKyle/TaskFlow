@@ -6,10 +6,6 @@ spring:
   main:
     web-application-type: reactive
 
-
-
-
-
   # Redis 配置
   data:
     redis:
@@ -26,17 +22,20 @@ spring:
         shutdown-timeout: 100ms
 
   # 监控配置
-  management:
-    endpoints:
-      web:
-        exposure:
-          include: health,info,metrics,prometheus,gateway
-    metrics:
-      tags:
-        application: ${spring.application.name}
-    tracing:
-      sampling:
-        probability: 1.0
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus,gateway
+  endpoint:
+    gateway:
+      enabled: true  # 添加这一行
+  metrics:
+    tags:
+      application: ${spring.application.name}
+  tracing:
+    sampling:
+      probability: 0.0
 
 logging:
   level:

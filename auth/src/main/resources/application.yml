@@ -1,16 +1,5 @@
 spring:
 
-
-
-  cloud:
-    nacos:
-      config:
-        enabled: false
-        import-check:
-          enabled: false
-      discovery:
-        enabled: false
-
   datasource:
     url: jdbc:mysql://${MYSQL_HOST:localhost}:${MYSQL_PORT:3306}/flowstack_auth?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Shanghai
     username: ${MYSQL_USERNAME:root}
@@ -38,6 +27,12 @@ spring:
       resourceserver:
         jwt:
           issuer-uri: http://localhost:8080
+
+jwt:
+  public-key-location: classpath:keys/public.pem
+  private-key-location: classpath:keys/private_pkcs8.pem
+  issuer: flowstack
+  audience: flowstack-users
 
 server:
   port: 8081
