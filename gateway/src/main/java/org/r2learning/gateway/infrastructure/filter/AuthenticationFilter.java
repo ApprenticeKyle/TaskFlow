@@ -46,7 +46,8 @@ public class AuthenticationFilter implements GlobalFilter, Ordered {
             "/swagger-ui/",
             "/swagger-resources/",
             "/swagger-ui.html",
-            "/csrf"
+            "/csrf",
+            "/fallback/"  // 添加fallback路径跳过认证
         );
     }
 

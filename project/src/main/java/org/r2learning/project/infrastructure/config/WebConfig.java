@@ -1,4 +1,4 @@
-package org.r2learning.common.infrastructure.config;
+package org.r2learning.project.infrastructure.config;
 
 import org.r2learning.common.infrastructure.interceptor.UserInfoInterceptor;
 import org.springframework.context.annotation.Configuration;

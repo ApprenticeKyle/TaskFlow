@@ -25,6 +25,7 @@
         <module>analytics</module>
         <module>search</module>
         <module>file</module>
+        <module>common</module>
     </modules>
 
     <properties>

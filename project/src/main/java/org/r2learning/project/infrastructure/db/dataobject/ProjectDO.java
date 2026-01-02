@@ -3,6 +3,7 @@ package org.r2learning.project.infrastructure.db.dataobject;
 import jakarta.persistence.*;
 import lombok.Data;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Data
@@ -18,4 +19,8 @@ public class ProjectDO {
     private Long ownerId;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
+    private String status;
+    private LocalDate deadline;
+    private Integer members;
+    private Integer progress;
 }

@@ -2,6 +2,8 @@ package org.r2learning.project.interfaces.web.dto;
 
 import lombok.Builder;
 import lombok.Data;
+
+import java.time.LocalDate;
 import java.util.List;
 
 @Data
@@ -12,4 +14,8 @@ public class ProjectDTO {
     private String description;
     private Long ownerId;
     private List<TaskRemoteDTO> tasks;
+    private String status;
+    private LocalDate deadline;
+    private Integer members;
+    private Integer progress;
 }

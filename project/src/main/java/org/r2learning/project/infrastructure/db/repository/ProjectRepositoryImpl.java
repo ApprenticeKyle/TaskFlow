@@ -1,6 +1,9 @@
 package org.r2learning.project.infrastructure.db.repository;
 
 import lombok.RequiredArgsConstructor;
+
+import java.util.Collection;
+
 import org.r2learning.project.domain.project.Project;
 import org.r2learning.project.domain.project.gateway.ProjectGateway;
 import org.r2learning.project.infrastructure.db.dataobject.ProjectDO;
@@ -28,5 +31,12 @@ public class ProjectRepositoryImpl implements ProjectGateway {
     @Override
     public void delete(Long id) {
         jpaProjectRepository.deleteById(id);
+    }
+
+    @Override
+    public Collection<Project> findAll() {
+        return jpaProjectRepository.findAll().stream()
+                .map(projectMapper::toEntity)
+                .toList();
     }
 }

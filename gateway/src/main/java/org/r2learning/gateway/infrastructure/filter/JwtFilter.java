@@ -1,6 +1,5 @@
 package org.r2learning.gateway.infrastructure.filter;
 
-import org.r2learning.common.domain.user.UserInfo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cloud.gateway.filter.GatewayFilterChain;
 import org.springframework.cloud.gateway.filter.GlobalFilter;
@@ -37,11 +36,10 @@ public class JwtFilter implements GlobalFilter, Ordered {
 
                 // 4. 将用户信息添加到请求头
                 // 从JWT解析用户信息后
-                UserInfo userInfo = new UserInfo(userId, username);
                 // 传递到下游服务
                 ServerHttpRequest modifiedRequest = exchange.getRequest().mutate()
-                    .header("X-User-Id", userInfo.getUserId().toString())
-                    .header("X-Username", userInfo.getUsername()).build();
+                    .header("X-User-Id", userId)
+                    .header("X-Username", username).build();
 
                 return chain.filter(exchange.mutate().request(modifiedRequest).build());
             } catch (Exception e) {
